@@ -13,9 +13,63 @@ const { NotImplementedError } = require('../extensions/index.js');
  * transform([1, 2, 3, '--discard-prev', 4, 5]) => [1, 2, 4, 5]
  * 
  */
-function transform(/* arr */) {
-  throw new NotImplementedError('Not implemented');
-  // remove line with error and write your code here
+function transform(arr) {
+  if (!(arr instanceof Array)) {
+    throw new Error(`'arr' parameter must be an instance of the Array!`);
+  }
+
+  const CONTROL_SEQUENCES = {
+    arrayCopy: [...arr],
+    '--discard-next': function(index) {
+      if (!(index === this.arrayCopy.length - 1)) {
+        this.arrayCopy.splice(index, 2, '*', '*');
+      } else {
+        this.arrayCopy.splice(index, 1, '*');
+      }
+      
+      return this.arrayCopy;
+    },
+    '--discard-prev': function(index) {
+      if (!(index === 0)) {
+        this.arrayCopy.splice(index - 1, 2, '*', '*');
+      } else {
+        this.arrayCopy.splice(index, 1, '*')
+      }
+      
+      return this.arrayCopy;
+    },
+    '--double-next': function(index) {
+      if (!(index === this.arrayCopy.length - 1)) {
+        this.arrayCopy.splice(index, 1, this.arrayCopy[index + 1]);
+      } else {
+        this.arrayCopy.splice(index, 1, '*')
+      }
+      
+      return this.arrayCopy;
+    },
+    '--double-prev': function(index) {
+      if (!(index === 0)) {
+        this.arrayCopy.splice(index, 1, this.arrayCopy[index - 1]);
+      } else {
+        this.arrayCopy.splice(index, 1, '*')
+      }
+      
+      return this.arrayCopy;
+    },
+    cleanArray() {
+      return this.arrayCopy.filter(e => e !== '*');
+    }
+  }
+
+  const keys = Object.keys(CONTROL_SEQUENCES);
+
+  arr.forEach((e, i) => {
+    if (keys.includes(e)) {
+      CONTROL_SEQUENCES[e](i);
+    }
+  });
+
+  return CONTROL_SEQUENCES.cleanArray();
 }
 
 module.exports = {
